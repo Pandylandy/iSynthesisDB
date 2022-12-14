@@ -26,3 +26,5 @@ if data:
     print('yes')
 else:
     print('no')
+
+print(benzene.name)

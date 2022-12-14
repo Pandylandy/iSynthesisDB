@@ -19,7 +19,7 @@ def add_first_10_mols_from_sdf(file):
             number_of_molecule += 1
 
 # Вызываем функцию и добавляем первые 10 молекул из файла
-# add_first_10_mols_from_sdf('logBB.sdf')
+add_first_10_mols_from_sdf('logBB.sdf')
 
 @db_session
 # Добавляем 5 условных молекул в базу данных
