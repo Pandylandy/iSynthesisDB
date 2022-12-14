@@ -3,7 +3,6 @@ from pony.orm import *
 from datetime import *
 from CGRtools.files import SDFRead
 from pickle import dumps, loads
-import time
 
 db = Database()
 
@@ -14,12 +13,11 @@ class Molecule(db.Entity):
     name = Required(str)
     organic_molecule = Required(bool)  # Is that organic molecule or not
     structure = Set('Molecule_Structure')
-    property = Set('Molecule_Property')
+    properties = Set('Molecule_Property')
     storage = Set('Storage')
 
     def __init__(self, structure, organic_molecule=True, substance_form='No information', remaining=None,
                         shelf_life='01.01.1900', place='No information', supplier='No information'):
-        structure.canonicalize()
         if Molecule_Structure.exists(signature=bytes(structure)):
             raise ValueError('That molecule is already in the database >:-(')
         db.Entity.__init__(self, name = str(structure), organic_molecule = organic_molecule)
@@ -28,22 +26,25 @@ class Molecule(db.Entity):
         Storage(molecule=self, place=place, supplier=supplier)
         print('Molecule added')
         
+    @property
     def _structure(self):
-        return list(self.structure)[0].get_structure()
+        return next(iter(self.structure)).structure
 
-    # Определяем функцию, которой передаём молекулу в каноничном виде и находим её в базе данных
+    @property
+    def molecule_description(self):
+        return next(iter(self.properties)).get_molecule_description
+
+    # Определяем метод, который передаём молекулу в каноничном виде и находим её в базе данных
     def find_molecule_in_database(any_molecule):
-        
-        with db_session:
-            any_molecule.canonicalize()            
+        with db_session:            
             result = select(molecule
                                 for molecule in Molecule
                                 for molecule_structure in molecule.structure
                                 if molecule_structure.signature == bytes(any_molecule))
-            print(result)
-            return result
+            for i in result:
+                yield i
 
-    # Определяем функцию, которая обновляет информацию по имеющейся в базе данных молекуле
+    # Определяем метод, который обновляет информацию по имеющейся в базе данных молекуле
     def add_info(self, substance_form='No information', remaining=None,
                         shelf_life='01.01.1900', place='No information', supplier='No information'):
         Molecule_Property(molecule=self, substance_form=substance_form, remaining=remaining, shelf_life=shelf_life)
@@ -62,44 +63,53 @@ class Molecule_Property(db.Entity):
             raise ValueError('That property information is already in the database >:-(')
         db.Entity.__init__(self, molecule=molecule, substance_form=substance_form, remaining=remaining, shelf_life=shelf_life)
 
-    # Определяем функцию, которая показывает заканчивающиеся в ближайшие 180 дней сроки годности молекул
+    # Определяем метод, который показывает заканчивающиеся в ближайшие 180 дней сроки годности молекул
     def upcoming_180_days():
         with db_session:
             results = select((molecule, f'Срок годности до: {molecule_property.shelf_life}')
                                 for molecule in Molecule
-                                for molecule_property in molecule.property
+                                for molecule_property in molecule.properties
                                 if molecule_property.shelf_life < datetime.today() + timedelta(days=180))
             return (list(results))
 
-    # Определяем функцию, которая принимает дату и выводит молекулы до этой даты
+    # Определяем метод, который принимает дату и выводит молекулы до этой даты
     def molecules_before_date(year, month, day):
         with db_session:
             results = select((molecule, f'Срок годности до: {molecule_property.shelf_life}')
                                 for molecule in Molecule
-                                for molecule_property in molecule.property
+                                for molecule_property in molecule.properties
                                 if molecule_property.shelf_life < datetime(year, month, day))
             return (list(results))         
 
-    # Определяем функцию, которая вернёт все молекулы определённой формы
+    # Определяем метод, который вернёт все молекулы определённой формы
     def find_form(subst_form):
         with db_session:
             result = select((molecule, f'Форма: {molecule_property.substance_form}')
                                 for molecule in Molecule
-                                for molecule_property in molecule.property
+                                for molecule_property in molecule.properties
                                 if molecule_property.substance_form == subst_form)
             for i in result:
                 yield i
     
-    # Определяем функцию, которая вернёт все молекулы меньше определённого порога по весу
+    # Определяем метод, который вернёт все молекулы меньше определённого порога по весу
     def less_than(remain):
         with db_session:
             result = select((molecule, f'Остаток по весу: {molecule_property.remaining}')
                                 for molecule in Molecule
-                                for molecule_property in molecule.property
+                                for molecule_property in molecule.properties
                                 if molecule_property.remaining < remain)
             for i in result:
                 yield i
-    
+     
+     # Определяем метод, который вернёт полное описание молекулы
+    @property
+    def get_molecule_description(self):
+        with db_session:
+            res_1 = {'Форма субстанции': self.substance_form for self in Molecule_Property.select(lambda i: i.id == self.id)}
+            res_2 = {'Остаток': str(int(self.remaining)) for self in Molecule_Property.select(lambda i: i.id == self.id)}
+            res_3 = {'Срок годности': self.shelf_life.strftime('%d.%m.%Y') for self in Molecule_Property.select(lambda i: i.id == self.id)}
+        return res_1, res_2, res_3
+
 class Molecule_Structure(db.Entity):
     molecule = Required(Molecule)
     id = PrimaryKey(int, auto=True)  # Identification number of the structure
@@ -111,7 +121,8 @@ class Molecule_Structure(db.Entity):
         data = dumps(data)
         db.Entity.__init__(self, molecule=molecule, signature=signature, data=data)
 
-    def get_structure(self):
+    @property
+    def structure(self):
         return loads(self.data)
 
 class Storage(db.Entity):
@@ -133,17 +144,11 @@ with SDFRead('logBB.sdf') as f:
     data_molecules = [r for r in f]
 
 with db_session:
-    # db.Molecule(data_molecules[9], organic_molecule=False, substance_form='Solution', remaining='360',
-    #                     shelf_life='15.06.2023', place='19', supplier='No information')
+    # db.Molecule(data_molecules[1], organic_molecule=True, substance_form='Powder', remaining='480',
+    #                     shelf_life='01.05.2023', place='18', supplier='EcoPharm')
 
     # db.Molecule[1].add_info(substance_form='Solution', remaining=500.0, shelf_life='01.01.2023')
     # print(db.Molecule[1].structure.get_structure())
-    # print(type(db.Molecule[1]._structure()))
+    # print(db.Molecule[1]._structure)
 
-    print(Molecule_Property.find_form('powder'))
-
-    for i in Molecule_Property.find_form('powder'):
-        print(i)
-
-    for i in Molecule_Property.less_than(500):
-        print(i)
+    print(db.Molecule[2].molecule_description)
