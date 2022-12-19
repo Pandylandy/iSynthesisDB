@@ -20,3 +20,11 @@ benzene.PrintAttributes()
 
 print(str(benzene))
 
+data = [1]
+
+if data:
+    print('yes')
+else:
+    print('no')
+
+print(benzene.name)
