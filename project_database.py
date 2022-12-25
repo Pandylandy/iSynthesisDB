@@ -53,11 +53,7 @@ class Molecule(db.Entity):
     # Метод, который возвращает все структуры одной молекулы
     @property
     def structures(self):
-        structures = []
-        with db_session:
-            for structure in self.structure:
-                structures.append(structure)
-        return structures
+        return [structure for structure in self.structure]
 
 class Molecule_Property(db.Entity):
     molecule = Required(Molecule)
