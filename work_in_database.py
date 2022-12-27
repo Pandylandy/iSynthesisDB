@@ -1,47 +1,47 @@
 from project_database import *
 
 # Определяем функцию, добавляющую в базу данных первые 10 молекул из любого файла с расширением .sdf
-def add_first_10_mols_from_sdf(file):
+# def add_first_10_mols_from_sdf(file):
 
-    data_molecules = []
-    with SDFRead(file) as f:
-        data_molecules = [r for r in f]
+#     data_molecules = []
+#     with SDFRead(file) as f:
+#         data_molecules = [r for r in f]
 
-    with db_session:
-        number_of_molecule = 1
-        for i in data_molecules[:10]:
-            i.canonicalize()
-            if Molecule_Structure.exists(signature=bytes(i)):
-                print(f'Molecule number {number_of_molecule} already in the database')
-            else:
-                molecule = Molecule(name=str(i), organic_molecule = True)
-                Molecule_Structure(molecule=molecule, signature=bytes(i))
-            number_of_molecule += 1
+#     with db_session:
+#         number_of_molecule = 1
+#         for i in data_molecules[:10]:
+#             i.canonicalize()
+#             if Molecule_Structure.exists(signature=bytes(i)):
+#                 print(f'Molecule number {number_of_molecule} already in the database')
+#             else:
+#                 molecule = Molecule(name=str(i), organic_molecule = True)
+#                 Molecule_Structure(molecule=molecule, signature=bytes(i))
+#             number_of_molecule += 1
 
 # Вызываем функцию и добавляем первые 10 молекул из файла
-add_first_10_mols_from_sdf('logBB.sdf')
+# add_first_10_mols_from_sdf('logBB.sdf')
 
-@db_session
+# @db_session
 # Добавляем 5 условных молекул в базу данных
-def add_molecules():
+# def add_molecules():
 
-    Benzene = Molecule(name='Benzene', organic_molecule = True)
-    Phenol = Molecule(name='Phenol', organic_molecule = True)
-    Copper_sulfate = Molecule(name='Copper_sulfate', organic_molecule = False)  
-    Silver_nitrate = Molecule(name='Silver_nitrate', organic_molecule = False)
-    Silver_sulfate = Molecule(name='Silver_sulfate', organic_molecule = False)
+#     Benzene = Molecule(name='Benzene', organic_molecule = True)
+#     Phenol = Molecule(name='Phenol', organic_molecule = True)
+#     Copper_sulfate = Molecule(name='Copper_sulfate', organic_molecule = False)  
+#     Silver_nitrate = Molecule(name='Silver_nitrate', organic_molecule = False)
+#     Silver_sulfate = Molecule(name='Silver_sulfate', organic_molecule = False)
 
-    Molecule_Property(molecule=Benzene, substance_form='liquid', remaining='50.8', shelf_life='01.06.2023')
-    Molecule_Property(molecule=Phenol, substance_form='liquid', remaining='65.3', shelf_life='01.05.2023')
-    Molecule_Property(molecule=Copper_sulfate, substance_form='powder', remaining='40.4', shelf_life='01.04.2023')
-    Molecule_Property(molecule=Silver_nitrate, substance_form='powder', remaining='91.2', shelf_life='01.03.2023')
-    Molecule_Property(molecule=Silver_sulfate, substance_form='powder', remaining='101.2', shelf_life='01.02.2023')
+#     Molecule_Property(molecule=Benzene, substance_form='liquid', remaining='50.8', shelf_life='01.06.2023')
+#     Molecule_Property(molecule=Phenol, substance_form='liquid', remaining='65.3', shelf_life='01.05.2023')
+#     Molecule_Property(molecule=Copper_sulfate, substance_form='powder', remaining='40.4', shelf_life='01.04.2023')
+#     Molecule_Property(molecule=Silver_nitrate, substance_form='powder', remaining='91.2', shelf_life='01.03.2023')
+#     Molecule_Property(molecule=Silver_sulfate, substance_form='powder', remaining='101.2', shelf_life='01.02.2023')
 
-    Storage(molecule=Benzene, place='1', supplier='Supplier1')
-    Storage(molecule=Phenol, place='2', supplier='Supplier2')
-    Storage(molecule=Copper_sulfate, place='11', supplier='Supplier3')
-    Storage(molecule=Silver_nitrate, place='11', supplier='Supplier4')
-    Storage(molecule=Silver_sulfate, place='12', supplier='Supplier5')
+#     Storage(molecule=Benzene, place='1', supplier='Supplier1')
+#     Storage(molecule=Phenol, place='2', supplier='Supplier2')
+#     Storage(molecule=Copper_sulfate, place='11', supplier='Supplier3')
+#     Storage(molecule=Silver_nitrate, place='11', supplier='Supplier4')
+#     Storage(molecule=Silver_sulfate, place='12', supplier='Supplier5')
 
 # Вызов функции с отправкой 5 условных молекул в базу данных
 # add_molecules()
@@ -156,3 +156,67 @@ def add_molecules():
 #                 for item in powder_polo4ka_dict[key]
 #                 if 'powder' and '11' in item.values()]
 # print(polo4ki)
+
+
+
+
+
+data_molecules = []
+with SDFRead('logBB.sdf') as f:
+    data_molecules = [r for r in f]
+
+data_reactions = []
+with RDFRead('example.rdf') as f:
+    data_reactions = [r for r in f]
+reaction = next(SMILESRead('untitled.txt'))
+
+reaction_bug = ReactionContainer(reaction.products, [])
+product_of_reaction = reaction.products
+reactant_of_reaction = reaction.reactants
+
+with db_session:
+    # Тест работы метода find_molecule_in_db()
+    # print(Molecule.find_molecule_in_db(data_molecules[5]))
+
+    # Добавить молекулу из logBB.sdf
+    # db.Molecule(data_molecules[5], organic_molecule=True, substance_form='Powder', remaining='480',
+    #                     shelf_life='01.05.2023', place='18', supplier='EcoPharm', canonical_structure='No')
+
+    # db.Molecule[1].add_info(substance_form='Solution', remaining=500.0, shelf_life='01.01.2023')
+    # print(db.Molecule[1]._structure)
+
+    # Тест работы метода description()
+    # print(db.Molecule[1].description)
+
+    # Тест работы метода upcoming_180_days()
+    # print(Molecule_Property.upcoming_180_days())
+
+    # Тест работы метода molecules_before_date()
+    # print(Molecule_Property.molecules_before_date(2023, 4, 30))
+
+    # Тест работы метода find_form()
+    # print(Molecule_Property.find_form('Solution'))
+
+    # Тест работы метода less_than()
+    # print(Molecule_Property.less_than(499))
+
+    # Тест добавления реакции в базу
+    # db.Reaction(reaction)
+
+    # Тест проверки наличия реакции в базе
+    # print(Reaction.find_reaction_in_db(reaction))
+
+    # Тест проверки работы метода Reaction.structure()
+    # print(db.Reaction[1].structure)
+
+    # Скрипт для добавления ещё одной структуры к уже имеющейся молекуле
+    # Molecule_Structure(molecule=Molecule.get(id=1), signature=bytes(data_molecules[3].canonicalize()), data=data_molecules[3].canonicalize(), canonical_structure='Yes')
+
+    # Тест работы метода structures
+    # print(db.Molecule[1].structures)
+
+    # Тест работы метода find_reactions_with_molecule_as_product():
+    # print(Molecule.find_reactions_with_molecule_as_product(product_of_reaction[0]))
+
+    # Тест работы метода find_reactions_with_molecule_as_reactant():
+    print(Molecule.find_reactions_with_molecule_as_reactant(reactant_of_reaction[0]))
