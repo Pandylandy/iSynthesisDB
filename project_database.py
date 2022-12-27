@@ -22,7 +22,7 @@ class Molecule(db.Entity):
                         shelf_life='01.01.1900', place='No information', supplier='No information', canonical_structure='No information'):
         if Molecule_Structure.exists(signature=bytes(structure)):
             raise ValueError('That molecule is already in the database >:-(')
-        db.Entity.__init__(self, name = str(structure), organic_molecule = organic_molecule)
+        db.Entity.__init__(self, name = str(structure), organic_molecule=organic_molecule)
         Molecule_Structure(molecule=self, signature=bytes(structure), data=structure, canonical_structure=canonical_structure)
         Molecule_Property(molecule=self, substance_form=substance_form, remaining=remaining, shelf_life=shelf_life)
         Storage(molecule=self, place=place, supplier=supplier)
