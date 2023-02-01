@@ -1,10 +1,10 @@
-from CGRdb.database import Reaction, Molecule, Substance, MoleculeStructure, db, CGR
+from CGRdb.database import Molecule, Substance, db
 from CGRdb.database.config import Config
 from chython import RDFRead, ReactionContainer, SDFRead, smiles
 from pony.orm import db_session
 import sys
 import zipfile
-from CGRdb.tests import mol_queries, reaction_queries, cgr_queries, Test
+from CGRdb.tests import mol_queries
 
 sys.modules[
     '__main__'].__file__ = None  # ad-hoc for disabling the Pony interactive mode.
@@ -46,20 +46,13 @@ with db_session():
 
     print(f"\033[32mReaction from USPTO.smi.zip:\033[0m {reaction}")
 
-    # Add molecule in db by Tutorial.ipynb
-    # m = Molecule.get(mol)
-    # idx = m.id
-    # print(m) # molecule record object
-    # print(idx)
-
     m = Molecule.get(mol)
     idx = m.id
-    print()
-    print(f"\033[32mMolecule.get(mol):\033[0m {m}") # molecule record object
-    print(f"\033[32mm.id:\033[0m {idx}")
+    print(f"\033[32midx = m.id:\033[0m {idx}")
 
     # Relation to the canonic structure
     m = Molecule.get(mol)  # get DB object by structure
+    print(mol)
     can_structure = m.canonic_structure
     print()
     print(f"\033[32mMoleculeStructure of {m}:\033[0m {can_structure}")
@@ -80,7 +73,7 @@ with db_session():
     m = Molecule.get(mol)
     structure = list(m.structures)[0].structure
     print()
-    print(f"\033[32mAlternative way of accessing the structures:\033[0m {structure}")
+    print(f"\033[32mlist(m.structures)[0].structure:\033[0m {structure}")
     # structure is a chython.MoleculeContainer and provide all method of the Class
 
     # fingerprint of the Molecular Structure can be accessed as well as SMILES
@@ -120,8 +113,8 @@ with db_session():
     # Substance take list of tuples of molecules with their percentage in the compound.
     # If there is no information about ratio, None can be used.
     # for example we will add some n-hexane solvent and store the solution of previous molecule
-    # subs = [(mol, 0.2), (hexane, 0.8)]
-    # s = Substance.(subs, name="AA000001")
+    subs = [(mol, 0.2), (hexane, 0.8)]
+    s = Substance(subs, name="AA000001")
     s = Substance[1]
     idx = s.id
     print()
@@ -206,3 +199,32 @@ with db_session():
     print(f"\033[32mnext(res)[1].structure:\033[0m {a[1].structure}")
     print(f"\033[32mnext(res)[0].canonic_structure.structure:\033[0m {a[0].canonic_structure.structure}")
     print(f"\033[32mTanimoto:\033[0m {a[2]}")
+
+    # db.MoleculeProperties(db.Molecule[1], place='14', supplier='EkoPharm', substance_form='Powder', remaining='500.0', shelf_life='01.12.2023')
+    # db.MoleculeProperties(db.Molecule[2], place='15', supplier='EkoPharm', substance_form='Gas', remaining='600.0', shelf_life='01.06.2023')
+    # db.MoleculeProperties(db.Molecule[3], place='16', supplier='EkoPharm', substance_form='Powder', remaining='1000.0', shelf_life='01.10.2023')
+    # db.MoleculeProperties(db.Molecule[4], place='17', supplier='EkoPharm', substance_form='Solution', remaining='500.0', shelf_life='01.12.2023')
+
+    print()
+    print(f"\033[32mТест работы метода upcoming_180_days():\033[0m {db.MoleculeProperties.upcoming_180_days()}")
+
+    print()
+    print(f"\033[32mТест работы метода molecules_before_date(yyyy, m, d):\033[0m {db.MoleculeProperties.molecules_before_date(2023, 11, 1)}")
+
+    print()
+    print(f"\033[32mТест работы метода find_form():\033[0m {db.MoleculeProperties.find_form('Solution')}")
+
+    print()
+    print(f"\033[32mТест работы метода less_than():\033[0m {db.MoleculeProperties.less_than(550)}")
+
+    print()
+    print(f"\033[32mТест работы метода molecule_description():\033[0m {db.MoleculeProperties[1].molecule_description}")
+
+    # Тест изменения значения remaining в таблице
+    # db.MoleculeProperties[1].remaining = '2000.0'
+
+    # Тест работы метода add_info():
+    # db.Molecule[1].add_info(substance_form='Solution', remaining=500.0, shelf_life='01.01.2023', place='17', supplier='EkoPharm')
+
+    print()
+    print(f"\033[32mТест работы метода description:\033[0m {db.Molecule[1].description}")
