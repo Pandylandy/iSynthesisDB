@@ -1,0 +1,8 @@
+CGRtools~=4.1.35
+pony~=0.7.16
+StructureFingerprint~=2.1
+datasketch~=1.5.8
+tqdm~=4.64.1
+chython~=1.48.1
+multiprocess~=0.70.14
+setuptools~=59.6.0

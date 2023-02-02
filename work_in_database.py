@@ -187,7 +187,7 @@ with db_session:
 
     # Тест работы метода description()
     # print(db.Molecule[1].description)
-
+    #
     # Тест работы метода upcoming_180_days()
     # print(Molecule_Property.upcoming_180_days())
 
